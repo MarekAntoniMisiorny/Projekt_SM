@@ -29,7 +29,7 @@
 #include "bh1750_config.h"
 #include "bulb.h"
 #include "led_config.h"
-//testing github
+//sadasdasd
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -128,16 +128,16 @@ int main(void)
 
   BH1750_Init(&hbh1750);
   HAL_TIM_Base_Start_IT(&htim7);
-  LED_PWM_Init(&hld1);
+  HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_1);
 
 
   Bulb_State(1);
-  LED_PWM_WriteDuty(&hld1, 100);
+  //LED_PWM_WriteDuty(&hld1, 100);
 
 
 
 
-  //HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, SET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, SET);
 
   /* USER CODE END 2 */
 
