@@ -25,7 +25,7 @@
 /* Public variables ----------------------------------------------------------*/
 
 
-LED_PWM_Handle_TypeDef hld1 = LED_PWM_INIT_HANDLE(&htim7, TIM_CHANNEL_1, LED_ON_HIGH);
+LED_PWM_Handle_TypeDef hld1 = LED_PWM_INIT_HANDLE(&htim3,TIM_CHANNEL_1, LED_ON_HIGH);
 
 /* Private function prototypes -----------------------------------------------*/
 

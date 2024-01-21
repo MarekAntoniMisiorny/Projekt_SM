@@ -17,6 +17,7 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
+#include <make_boundry.h>
 #include "main.h"
 #include "i2c.h"
 #include "tim.h"
@@ -26,10 +27,11 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include <stdlib.h>
 #include "bh1750_config.h"
 #include "bulb.h"
 #include "led_config.h"
-//sadasdasd
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -76,6 +78,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     Illuminance_lux = BH1750_ReadIlluminance_lux(&hbh1750);
     Illuminance_lux_Int = Illuminance_lux * 1000.0f;
 
+
+
     if(cnt == 5)
     {
       uint8_t tx_buffer[32];
@@ -121,23 +125,30 @@ int main(void)
   MX_TIM9_Init();
   MX_TIM7_Init();
   MX_TIM3_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
   float Illuminance_lux_min = 0.0f;
   float Illuminance_lux_max = 0.0f;
 
+  int size = 4;
+
+
   BH1750_Init(&hbh1750);
   HAL_TIM_Base_Start_IT(&htim7);
-  HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_1);
+  HAL_TIM_Base_Start(&htim1);
+  //HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_1);
+  LED_PWM_Init(&hld1);
 
 
-  Bulb_State(1);
-  //LED_PWM_WriteDuty(&hld1, 100);
+  //Bulb_State(1);
+
+
+  int* tab =Light_Boundries();
+  free(tab);
 
 
 
-
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, SET);
 
   /* USER CODE END 2 */
 
@@ -145,7 +156,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1,1000);
+   // __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1,1000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
