@@ -62,6 +62,8 @@ char buffer[6];
 Lcd_HandleTypeDef lcd;
 float duty_pid;
 float duty_p;
+int* tab;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -92,19 +94,30 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     {
       duty_pid = 99;
     }
-    LED_PWM_WriteDuty(&hld1,duty_pid );
+
+    int duty_pid_int = duty_pid;
+    LED_PWM_WriteDuty(&hld1,duty_pid);
 
 
     if(cnt == 5)
     {
-      uint8_t tx_buffer[32];
-      int tx_msg_len = sprintf((char*)tx_buffer, "Illuminance: %5u.%03u\r", Illuminance_lux_Int / 1000, Illuminance_lux_Int % 1000);
-      HAL_UART_Transmit(&huart3, tx_buffer, tx_msg_len, 100);
-      cnt = 0;
+      uint8_t tx_buffer[64];
+      uint8_t tx_buffer2[5];
+
+      //int tx_msg_len = sprintf((char*)tx_buffer, "Illuminance: %5u.%03u\r", Illuminance_lux_Int / 1000, Illuminance_lux_Int % 1000);
+      if (duty_pid>99) { duty_pid = 12;}
+      int tx_msg_len = sprintf((char*)tx_buffer, " %5u.%03u %d %d \r", Illuminance_lux_Int / 1000, Illuminance_lux_Int % 1000,lux_ref, duty_pid_int );
+      //int tx_msg_len2 = sprintf((char*)tx_buffer2, "%d \r", duty_pid_int );
+
+      HAL_UART_Transmit(&huart3, tx_buffer, tx_msg_len, 100);      cnt = 0;
       LCD_Illuminance_lux = Illuminance_lux_Int;
 
       gcvt(LCD_Illuminance_lux,6,buffer); //Przepisz wartość do buffera
     }
+
+
+
+
   }
 }
 
@@ -117,6 +130,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+
 
   /* USER CODE END 1 */
 
@@ -162,7 +176,7 @@ int main(void)
   //Bulb_State(1);
 
   //Swtórz granice światła
-  int* tab =Light_Boundries();
+  tab =Light_Boundries();
   free(tab);
   //Ustaw LCD
   // Lcd_PortType ports[] = { D4_GPIO_Port, D5_GPIO_Port, D6_GPIO_Port, D7_GPIO_Port };
@@ -200,6 +214,8 @@ int main(void)
                                 continue;
                             }
                         }
+
+
   }
   /* USER CODE END 3 */
 }
