@@ -17,7 +17,9 @@
 int* Light_Boundries()
 {
   int size = 4;
+  int size_temp = 10;
   int* Boundries = (int*) malloc(sizeof(*Boundries) * size);
+  int Boundries_temp = 0;
   float H_Boundry_with_Bulb;
   float L_Boundry_With_Bulb;
   float H_Boundry_No_Bulb;
@@ -26,35 +28,72 @@ int* Light_Boundries()
 
     Bulb_State(1); //Light Bulb
     LED_PWM_WriteDuty(&hld1, 99);
-    HAL_Delay(500);
-    H_Boundry_with_Bulb = BH1750_ReadIlluminance_lux(&hbh1750);
-    illuminance_int =  H_Boundry_with_Bulb * 1000.0f;
-    Boundries[0] =   illuminance_int;
-    HAL_Delay(100);
-    Bulb_State(1);
+    delay_us(2000);
+
+    for (int i = 0; i < 10;i++)
+    {
+      LED_PWM_WriteDuty(&hld1, 99);
+      H_Boundry_with_Bulb = BH1750_ReadIlluminance_lux(&hbh1750);
+      illuminance_int =  (unsigned int)(H_Boundry_with_Bulb * 1000.0f);
+      Boundries_temp = Boundries_temp + illuminance_int;
+      delay_us(100);
+    }
+    Boundries_temp = Boundries_temp / 10;
+    Boundries[0] =   Boundries_temp;
+    Boundries_temp = 0;
     LED_PWM_WriteDuty(&hld1, 0);
-    HAL_Delay(500);
-    L_Boundry_With_Bulb =  BH1750_ReadIlluminance_lux(&hbh1750);
-    illuminance_int =  L_Boundry_With_Bulb * 1000.0f;
-    Boundries[1]=  illuminance_int;
+    delay_us(2000);
 
-    HAL_Delay(100);
+
+    for (int i = 0; i < 10;i++)
+        {
+
+      L_Boundry_With_Bulb = BH1750_ReadIlluminance_lux(&hbh1750);
+          illuminance_int =  (unsigned int)(L_Boundry_With_Bulb * 1000.0f);
+          Boundries_temp = Boundries_temp + illuminance_int;
+          delay_us(200);
+        }
+        Boundries_temp = Boundries_temp / 10;
+        Boundries[1] =   Boundries_temp;
+        Boundries_temp = 0;
     Bulb_State(0); //OFF Bulb
+    delay_us(2000);
+
     LED_PWM_WriteDuty(&hld1, 99); //Light LED
-    HAL_Delay(500);// wait 0.5s
-    H_Boundry_No_Bulb =  BH1750_ReadIlluminance_lux(&hbh1750);
-    HAL_Delay(100);
-    illuminance_int = H_Boundry_No_Bulb * 1000.0f;
-    Boundries[2]= illuminance_int;
+    delay_us(2000);
 
-    HAL_Delay(100);
-    Bulb_State(0); //OFF Bulb
+    for (int i = 0; i < 10;i++)
+            {
+      LED_PWM_WriteDuty(&hld1, 99);
+              H_Boundry_No_Bulb = BH1750_ReadIlluminance_lux(&hbh1750);
+              illuminance_int =  (unsigned int)(H_Boundry_No_Bulb * 1000.0f);
+              Boundries_temp = Boundries_temp + illuminance_int;
+              delay_us(200);
+            }
+            Boundries_temp = Boundries_temp / 10;
+            Boundries[2] =   Boundries_temp;
+            Boundries_temp = 0;
     LED_PWM_WriteDuty(&hld1, 0); //OFF LED
-    HAL_Delay(500);// wait 0.5s
-    L_Boundry_No_Bulb =  BH1750_ReadIlluminance_lux(&hbh1750);
-    illuminance_int = L_Boundry_No_Bulb * 1000.0f;
-    Boundries[3] =  illuminance_int;
+    delay_us(2000);
 
+    for (int i = 0; i < 10;i++)
+                {
 
+                  L_Boundry_No_Bulb = BH1750_ReadIlluminance_lux(&hbh1750);
+                  illuminance_int =  (unsigned int)(L_Boundry_No_Bulb * 1000.0f);
+                  Boundries_temp = Boundries_temp + illuminance_int;
+                  delay_us(200);
+                }
+                Boundries_temp = Boundries_temp / 10;
+                Boundries[3] =   Boundries_temp;
+                Boundries_temp = 0;
+//  delay_us(1000);
+//  Bulb_State(1); //OFF Bulb
+//  delay_us(1000);
+//  Bulb_State(0); //OFF Bulb
+//  delay_us(1000);
+//  Bulb_State(1); //OFF Bulb
+//  delay_us(1000);
+//  Bulb_State(0); //OFF Bulb
   return Boundries;
 }

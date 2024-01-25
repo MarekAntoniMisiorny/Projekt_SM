@@ -57,15 +57,20 @@
 float Illuminance_lux = 0.0f;
 unsigned int Illuminance_kilo_lux_Int = 0;
 float LCD_Illuminance_lux = 0;
-int lux_ref = 45;
-char buffer[6];
-char tx_buffer_received[3];
+int lux_ref = 0;
+char buffer[9];
+char tx_buffer_received[4];
 Lcd_HandleTypeDef lcd;
 float duty_pid;
 float duty_p;
 int* tab;
 int user_reference;
-
+int led_check;
+int cnt =0;
+int8_t calibration=1;
+uint32_t pulseWidth;
+uint32_t totalPeriod;
+float dutyCycle;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -97,28 +102,38 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     {
       duty_pid = 99;
     }
-    // to mysle nie potrzebne bo jest sauracja w pid ??
 
     int duty_pid_int = duty_pid;
-    LED_PWM_WriteDuty(&hld1,duty_pid);
+    if(calibration==0){
+
+      if(lux_ref*1000>tab[2]){
+        Bulb_State(1); //OFF Bulb
+      }
+      else{
+        Bulb_State(0);
+      }
+
+      LED_PWM_WriteDuty(&hld1,duty_pid);
+
+    }
 
     uint8_t tx_buffer[64];
     int tx_msg_len = sprintf((char*)tx_buffer, " %5u.%03u %d %d \n", Illuminance_kilo_lux_Int / 1000, Illuminance_kilo_lux_Int % 1000,lux_ref, duty_pid_int );
     HAL_UART_Transmit(&huart3, tx_buffer, tx_msg_len, 100);
 
-//    if(cnt == 5)
-//    {
-//      uint8_t tx_buffer[64];
-//
-//      int tx_msg_len = sprintf((char*)tx_buffer, " %5u.%03u %d %d \r", Illuminance_kilo_lux_Int / 1000, Illuminance_kilo_lux_Int % 1000,lux_ref, duty_pid_int );
-//
-//      HAL_UART_Transmit(&huart3, tx_buffer, tx_msg_len, 100);      cnt = 0;
-//      LCD_Illuminance_lux = Illuminance_kilo_lux_Int;
-//      gcvt(LCD_Illuminance_lux,6,buffer); //Przepisz wartość do buffera
-//    }
+
+    if(cnt == 5)
+    {
+      cnt = 0;
+      LCD_Illuminance_lux = Illuminance_kilo_lux_Int;
+      gcvt(LCD_Illuminance_lux,9,buffer); //Przepisz wartość do buffera
+    }
 
   }
+
 }
+
+
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
@@ -187,8 +202,13 @@ int main(void)
   //Bulb_State(1);
 
   //Swtórz granice światła
-  tab =Light_Boundries();
+  tab = Light_Boundries();
+  calibration=0;
   free(tab);
+
+  //wait for counter to reach the us input in the parameter
+
+
   //Ustaw LCD
   // Lcd_PortType ports[] = { D4_GPIO_Port, D5_GPIO_Port, D6_GPIO_Port, D7_GPIO_Port };
    Lcd_PortType ports[] = { GPIOE, GPIOE, GPIOE, GPIOE };
@@ -212,13 +232,19 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    HAL_UART_Receive_IT(&huart3 , tx_buffer_received , 3 );
+    HAL_UART_Receive_IT(&huart3 , tx_buffer_received , 4 );
+
+     pulseWidth = HAL_TIM_ReadCapturedValue(&htim3, TIM_CHANNEL_1);
+     totalPeriod = __HAL_TIM_GET_AUTORELOAD(&htim3); // Assuming timer configured in upcounting mode
+    dutyCycle = ((float)pulseWidth / (float)totalPeriod) * 100.0f;
+   // timer_check =  __HAL_TIM_GET_COUNTER(&htim1);
+
     //LCD
         //Wypisz wartość lux
         Lcd_cursor(&lcd, 1,7);
                   Lcd_string(&lcd, buffer);
                   //usun poprzednie znaki
-        for (int i = 0; i < 6; ++i) {
+        for (int i = 0; i < 9; ++i) {
                             if (buffer[i] == NULL) {
                               Lcd_cursor(&lcd, 1,7 + i);
                                 Lcd_string(&lcd, "    ");
