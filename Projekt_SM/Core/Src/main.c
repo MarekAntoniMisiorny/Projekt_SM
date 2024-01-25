@@ -55,14 +55,16 @@
 
 /* USER CODE BEGIN PV */
 float Illuminance_lux = 0.0f;
-unsigned int Illuminance_lux_Int = 0;
+unsigned int Illuminance_kilo_lux_Int = 0;
 float LCD_Illuminance_lux = 0;
-int lux_ref = 120000;
+int lux_ref = 45;
 char buffer[6];
+char tx_buffer_received[3];
 Lcd_HandleTypeDef lcd;
 float duty_pid;
 float duty_p;
 int* tab;
+int user_reference;
 
 /* USER CODE END PV */
 
@@ -86,40 +88,49 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     static unsigned int cnt = 0;
     cnt++;
     Illuminance_lux = BH1750_ReadIlluminance_lux(&hbh1750);
-    Illuminance_lux_Int = Illuminance_lux * 1000.0f;
+    Illuminance_kilo_lux_Int = Illuminance_lux * 1000.0f;
 
-    duty_pid = PID_GetOutput(&hpid1, lux_ref, Illuminance_lux_Int);  // [%]
+
+    duty_pid = PID_GetOutput(&hpid1, lux_ref, Illuminance_lux);  // [%]
     duty_p = duty_pid;
     if(duty_pid > 99)
     {
       duty_pid = 99;
     }
+    // to mysle nie potrzebne bo jest sauracja w pid ??
 
     int duty_pid_int = duty_pid;
     LED_PWM_WriteDuty(&hld1,duty_pid);
 
+    uint8_t tx_buffer[64];
+    int tx_msg_len = sprintf((char*)tx_buffer, " %5u.%03u %d %d \n", Illuminance_kilo_lux_Int / 1000, Illuminance_kilo_lux_Int % 1000,lux_ref, duty_pid_int );
+    HAL_UART_Transmit(&huart3, tx_buffer, tx_msg_len, 100);
 
-    if(cnt == 5)
-    {
-      uint8_t tx_buffer[64];
-      uint8_t tx_buffer2[5];
-
-      //int tx_msg_len = sprintf((char*)tx_buffer, "Illuminance: %5u.%03u\r", Illuminance_lux_Int / 1000, Illuminance_lux_Int % 1000);
-      if (duty_pid>99) { duty_pid = 12;}
-      int tx_msg_len = sprintf((char*)tx_buffer, " %5u.%03u %d %d \r", Illuminance_lux_Int / 1000, Illuminance_lux_Int % 1000,lux_ref, duty_pid_int );
-      //int tx_msg_len2 = sprintf((char*)tx_buffer2, "%d \r", duty_pid_int );
-
-      HAL_UART_Transmit(&huart3, tx_buffer, tx_msg_len, 100);      cnt = 0;
-      LCD_Illuminance_lux = Illuminance_lux_Int;
-
-      gcvt(LCD_Illuminance_lux,6,buffer); //Przepisz wartość do buffera
-    }
-
-
-
+//    if(cnt == 5)
+//    {
+//      uint8_t tx_buffer[64];
+//
+//      int tx_msg_len = sprintf((char*)tx_buffer, " %5u.%03u %d %d \r", Illuminance_kilo_lux_Int / 1000, Illuminance_kilo_lux_Int % 1000,lux_ref, duty_pid_int );
+//
+//      HAL_UART_Transmit(&huart3, tx_buffer, tx_msg_len, 100);      cnt = 0;
+//      LCD_Illuminance_lux = Illuminance_kilo_lux_Int;
+//      gcvt(LCD_Illuminance_lux,6,buffer); //Przepisz wartość do buffera
+//    }
 
   }
 }
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+if(huart == &huart3)
+{
+user_reference = strtol((char*)&tx_buffer_received, 0, 10);
+lux_ref = user_reference;
+}
+}
+
+
+
 
 /* USER CODE END 0 */
 
@@ -201,7 +212,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
+    HAL_UART_Receive_IT(&huart3 , tx_buffer_received , 3 );
     //LCD
         //Wypisz wartość lux
         Lcd_cursor(&lcd, 1,7);

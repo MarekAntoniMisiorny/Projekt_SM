@@ -56,8 +56,5 @@ int* Light_Boundries()
     Boundries[3] =  illuminance_int;
 
 
-
-
-
   return Boundries;
 }
